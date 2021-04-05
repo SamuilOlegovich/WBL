@@ -16,4 +16,31 @@ public class Condition {
     private long bet;
     // доп смещении для генератора
     private int bias;
+
+
+
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public long getBet() {
+        return bet;
+    }
+
+    public void setBet(long bet) {
+        this.bet = bet;
+    }
+
+    public int getBias() {
+        return bias;
+    }
+
+    public void setBias(int bias) {
+        this.bias = bias;
+    }
 }
