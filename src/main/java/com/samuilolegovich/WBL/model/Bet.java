@@ -12,7 +12,6 @@ import com.samuilolegovich.WBL.repo.PlayerRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
-
 public class Bet implements Bets {
     @Autowired
     private ConditionRepo conditionRepo;
@@ -25,7 +24,7 @@ public class Bet implements Bets {
 
 
 
-    public synchronized Win calculateTheWin(long id, long bet, RedBlack redBlack) {
+    public synchronized Win calculateTheWin(long id, int bet, RedBlack redBlackBet) {
         // получаем игрока и данные о его кредитах
         Player player = playerRepo.findById(id);
         long playerCredits = player.getCredits();
@@ -49,31 +48,30 @@ public class Bet implements Bets {
         Lotto lotto = lottoRepo.findFirstByOrderByCreatedAtDesc();
         Condition condition = conditionRepo.findByBet(bet);
 
-        // генерируем число
-        byte generatedLotto = Generator.generate();
-
         // получаем данные по состоянию
         long lottoCredits = lotto.getLottoCredits();
         int bias = condition.getBias();
 
+        // генерируем число
+        byte generatedLotto = Generator.generate();
+
+
+        // дописать что делать если денег нет для выплаты 10-ти процентов
+        ///////////////////
 
         // если смещение больше нуля то проверяем на выигрыш
         if (bias > Constants.ZERO_BIAS) {
-            if (generatedLotto == Constants.POINT) return point(player, playerCredits, lottoCredits);
-            if (generatedLotto == Constants.SUPER_LOTTO) return superLotto(player, playerCredits, lottoCredits);
+            // если лото позволяет дробление
+            if (checkForWinningsLotto(lottoCredits)) {
+                if (generatedLotto == Constants.POINT) return point(player, playerCredits, lottoCredits);
+                if (generatedLotto == Constants.SUPER_LOTTO) return superLotto(player, playerCredits, lottoCredits);
+            }
+            return takeIntoAccountTheBias(player, playerCredits, bet, redBlackBet, arsenalCredit,
+                    lottoCredits, condition, bias);
         }
 
-        // дописать логику
-
-
-
-
-
-
-
-
-        // если сюда дошли то применяем смещение
-        return takeIntoAccountTheBias(player, condition, redBlack, arsenalCredit, lottoCredits, playerCredits, bet, bias);
+        return wonOrNotWon(player, playerCredits, bet, redBlackBet, generatedLotto,
+                arsenalCredit, lottoCredits, condition, bias);
     }
 
 
@@ -114,8 +112,8 @@ public class Bet implements Bets {
 
 
 
-    private Win takeIntoAccountTheBias(Player player, Condition condition, RedBlack redBlack,
-                                       long arsenalCredit, long lottoCredits, long playerCredits, long bet, int bias) {
+    private Win takeIntoAccountTheBias(Player player, long playerCredits, int bet, RedBlack redBlackBet,
+                                       long arsenalCredit, long lottoCredits, Condition condition, int bias) {
 
         player.setCredits(playerCredits - (bet * Constants.FOR_USER_CALCULATIONS));
 
@@ -136,6 +134,34 @@ public class Bet implements Bets {
         conditionRepo.save(condition);
         playerRepo.save(player);
 
-        return new Win(redBlack.equals(RedBlack.RED) ? RedBlack.BLACK : RedBlack.RED, 0);
+        return new Win(redBlackBet.equals(RedBlack.RED) ? RedBlack.BLACK : RedBlack.RED, 0);
+    }
+
+    
+
+    private Win wonOrNotWon(Player player, long playerCredits, int bet, RedBlack redBlackBet, byte generatedLotto,
+                            long arsenalCredit, long lottoCredits, Condition condition, int bias) {
+        // если лото позволяет дробление
+        if (checkForWinningsLotto(lottoCredits)) {
+            if (generatedLotto == Constants.POINT) return point(player, playerCredits, lottoCredits);
+            if (generatedLotto == Constants.SUPER_LOTTO) return superLotto(player, playerCredits, lottoCredits);
+        }
+
+        RedBlack redBlackConvert = Converter.convert(generatedLotto);
+
+        // если игрок выиграл
+        if (redBlackConvert.equals(redBlackBet)) {
+
+            // дописать логику -------------------------
+        }
+
+        return new Win(redBlackConvert, 0);
+    }
+
+
+
+    private boolean checkForWinningsLotto(long lottoCredits) {
+        if (lottoCredits >= 1000) return true;
+        return false;
     }
 }
