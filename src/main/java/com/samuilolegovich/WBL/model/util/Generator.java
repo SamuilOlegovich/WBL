@@ -1,4 +1,4 @@
-package com.samuilolegovich.WBL.model;
+package com.samuilolegovich.WBL.model.util;
 
 public class Generator {
     // генерирует число

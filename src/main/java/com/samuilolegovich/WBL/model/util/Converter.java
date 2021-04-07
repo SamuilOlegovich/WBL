@@ -1,6 +1,7 @@
-package com.samuilolegovich.WBL.model;
+package com.samuilolegovich.WBL.model.util;
 
 
+import com.samuilolegovich.WBL.model.RedBlack;
 
 public class Converter {
     // конвертирует число в енум

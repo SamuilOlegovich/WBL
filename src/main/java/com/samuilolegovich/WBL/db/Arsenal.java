@@ -14,6 +14,12 @@ public class Arsenal {
     private long id;
     private long credits;
 
+    public Arsenal() {
+    }
+
+    public Arsenal(long credits) {
+        this.credits = credits;
+    }
 
 
     public long getId() {

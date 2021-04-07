@@ -16,6 +16,16 @@ public class Lotto {
 
 
 
+    public Lotto() {
+    }
+
+    public Lotto(long lottoCredits) {
+        this.lottoCredits = lottoCredits;
+    }
+
+
+
+
     public long getId() {
         return id;
     }

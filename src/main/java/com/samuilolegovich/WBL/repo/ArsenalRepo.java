@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 
 @Repository
-public interface ArsenalRepo extends CrudRepository<ArsenalRepo, Long> {
+public interface ArsenalRepo extends CrudRepository<Arsenal, Long> {
     Arsenal findFirstByOrderByCreatedAtDesc();
 
 }

@@ -1,26 +1,33 @@
 package com.samuilolegovich.WBL.model;
 
 
-import com.samuilolegovich.WBL.db.Arsenal;
-import com.samuilolegovich.WBL.db.Condition;
-import com.samuilolegovich.WBL.db.Lotto;
-import com.samuilolegovich.WBL.db.Player;
-import com.samuilolegovich.WBL.repo.ArsenalRepo;
-import com.samuilolegovich.WBL.repo.ConditionRepo;
-import com.samuilolegovich.WBL.repo.LottoRepo;
-import com.samuilolegovich.WBL.repo.PlayerRepo;
+import com.samuilolegovich.WBL.db.*;
+import com.samuilolegovich.WBL.model.util.Constants;
+import com.samuilolegovich.WBL.model.util.Converter;
+import com.samuilolegovich.WBL.model.util.Generator;
+import com.samuilolegovich.WBL.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
+
+
 public class Bet implements Bets {
+    private static Bet bet = null;
+
     @Autowired
     private ConditionRepo conditionRepo;
+    @Autowired
+    private DonationsRepo donationsRepo;
     @Autowired
     private ArsenalRepo arsenalRepo;
     @Autowired
     private PlayerRepo playerRepo;
     @Autowired
     private LottoRepo lottoRepo;
+
+
+    private Bet() {}
+
 
 
 
@@ -55,10 +62,6 @@ public class Bet implements Bets {
         // генерируем число
         byte generatedLotto = Generator.generate();
 
-
-        // дописать что делать если денег нет для выплаты 10-ти процентов
-        ///////////////////
-
         // если смещение больше нуля то проверяем на выигрыш
         if (bias > Constants.ZERO_BIAS) {
             // если лото позволяет дробление
@@ -71,7 +74,7 @@ public class Bet implements Bets {
         }
 
         return wonOrNotWon(player, playerCredits, bet, redBlackBet, generatedLotto,
-                arsenalCredit, lottoCredits, condition, bias);
+                arsenalCredit, lottoCredits, condition);
     }
 
 
@@ -79,18 +82,17 @@ public class Bet implements Bets {
 
 
     private Win point(Player player, long playerCredits, long lottoCredits) {
-        // добавить откусывание 10 процентов в фонд
         long onePercent = lottoCredits / 100;
-        long tenPercent = onePercent * 9;
+        long boobyPrize = onePercent * Constants.BOOBY_PRIZE;
+        long totalDonation = donationsRepo.findFirstByOrderByCreatedAtDesc().getTotalDonations() + onePercent;
 
-        Lotto lotto = new Lotto();
-        lotto.setLottoCredits(lottoCredits - (onePercent * 10));
-        player.setCredits(playerCredits + tenPercent);
+        player.setCredits(playerCredits + boobyPrize);
 
-        lottoRepo.save(lotto);
+        lottoRepo.save(new Lotto(lottoCredits - (boobyPrize + onePercent)));
+        donationsRepo.save(new Donations(onePercent, totalDonation, RedBlack.POINT));
         playerRepo.save(player);
 
-        return new Win(RedBlack.POINT, tenPercent / Constants.FOR_USER_CALCULATIONS);
+        return new Win(RedBlack.POINT, boobyPrize / Constants.FOR_USER_CALCULATIONS);
     }
 
 
@@ -98,13 +100,14 @@ public class Bet implements Bets {
     private Win superLotto(Player player, long playerCredits, long lottoCredits) {
         // добавить откусывание 10 процентов в фонд
         long onePercent = lottoCredits / 100;
-        long allLotto = onePercent * 90;
+        long donation = onePercent * Constants.DONATE;
+        long allLotto = onePercent * Constants.PRIZE;
+        long totalDonations = donationsRepo.findFirstByOrderByCreatedAtDesc().getTotalDonations() + donation;
 
-        Lotto lotto = new Lotto();
-        lotto.setLottoCredits(0);
         player.setCredits(playerCredits + allLotto);
 
-        lottoRepo.save(lotto);
+        donationsRepo.save(new Donations(donation, totalDonations, RedBlack.POINT));
+        lottoRepo.save(new Lotto(0));
         playerRepo.save(player);
 
         return new Win(RedBlack.POINT, allLotto / Constants.FOR_USER_CALCULATIONS);
@@ -115,17 +118,15 @@ public class Bet implements Bets {
     private Win takeIntoAccountTheBias(Player player, long playerCredits, int bet, RedBlack redBlackBet,
                                        long arsenalCredit, long lottoCredits, Condition condition, int bias) {
 
-        player.setCredits(playerCredits - (bet * Constants.FOR_USER_CALCULATIONS));
+        int resultCredits = bet * Constants.FOR_USER_CALCULATIONS;
+
+        player.setCredits(playerCredits - resultCredits);
 
         // перенос средств в лото или арсенал
         if (bias == Constants.ONE_BIAS) {
-            Lotto lotto = new Lotto();
-            lotto.setLottoCredits(lottoCredits + (bet * Constants.FOR_USER_CALCULATIONS));
-            lottoRepo.save(lotto);
+            lottoRepo.save(new Lotto(lottoCredits + resultCredits));
         } else {
-            Arsenal arsenal = new Arsenal();
-            arsenal.setCredits(arsenalCredit + (bet * Constants.FOR_USER_CALCULATIONS));
-            arsenalRepo.save(arsenalRepo);
+            arsenalRepo.save(new Arsenal(arsenalCredit + resultCredits));
         }
 
         // уменьшаем смещение
@@ -140,7 +141,8 @@ public class Bet implements Bets {
     
 
     private Win wonOrNotWon(Player player, long playerCredits, int bet, RedBlack redBlackBet, byte generatedLotto,
-                            long arsenalCredit, long lottoCredits, Condition condition, int bias) {
+                            long arsenalCredits, long lottoCredits, Condition condition) {
+
         // если лото позволяет дробление
         if (checkForWinningsLotto(lottoCredits)) {
             if (generatedLotto == Constants.POINT) return point(player, playerCredits, lottoCredits);
@@ -149,11 +151,24 @@ public class Bet implements Bets {
 
         RedBlack redBlackConvert = Converter.convert(generatedLotto);
 
+        int resultCredits = bet * Constants.FOR_USER_CALCULATIONS;
+
         // если игрок выиграл
         if (redBlackConvert.equals(redBlackBet)) {
+            condition.setBias(Constants.BIAS);
+            player.setCredits(playerCredits + resultCredits);
 
-            // дописать логику -------------------------
+            arsenalRepo.save(new Arsenal(arsenalCredits - resultCredits));
+            conditionRepo.save(condition);
+            playerRepo.save(player);
+
+            return new Win(redBlackConvert, bet);
         }
+
+        player.setCredits(playerCredits - resultCredits);
+
+        lottoRepo.save(new Lotto(lottoCredits + resultCredits));
+        playerRepo.save(player);
 
         return new Win(redBlackConvert, 0);
     }
@@ -163,5 +178,12 @@ public class Bet implements Bets {
     private boolean checkForWinningsLotto(long lottoCredits) {
         if (lottoCredits >= 1000) return true;
         return false;
+    }
+
+
+
+    public static synchronized Bet getInstance() {
+        if (bet == null) bet = new Bet();
+        return bet;
     }
 }
