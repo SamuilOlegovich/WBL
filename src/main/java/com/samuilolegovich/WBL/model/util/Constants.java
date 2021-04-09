@@ -12,7 +12,7 @@ public class Constants {
     public static final byte ONE_BIAS = 1;
 
     public static final byte SUPER_LOTTO = 42;
-    public static final byte POINT = 21;
+    public static final byte LOTTO = 21;
 
     public static final byte BOOBY_PRIZE = 9;
     public static final byte DONATE = 10;

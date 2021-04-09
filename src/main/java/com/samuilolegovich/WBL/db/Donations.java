@@ -2,7 +2,8 @@ package com.samuilolegovich.WBL.db;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.samuilolegovich.WBL.model.RedBlack;
+import com.samuilolegovich.WBL.model.enums.Enums;
+import com.samuilolegovich.WBL.model.enums.Prize;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ public class Donations {
     private long id;
     private long donations;
     private long totalDonations;
-    private RedBlack typeWin;
+    private Prize typeWin;
     @Column(updatable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime creationDate;
@@ -24,9 +25,9 @@ public class Donations {
     public Donations() {
     }
 
-    public Donations(long donations, long totalDonations, RedBlack typeWin) {
-        this.donations = donations;
+    public Donations(long donations, long totalDonations, Prize typeWin) {
         this.totalDonations = totalDonations;
+        this.donations = donations;
         this.typeWin = typeWin;
     }
 
@@ -54,11 +55,11 @@ public class Donations {
         this.totalDonations = totalDonations;
     }
 
-    public RedBlack getTypeWin() {
+    public Enums getTypeWin() {
         return typeWin;
     }
 
-    public void setTypeWin(RedBlack typeWin) {
+    public void setTypeWin(Prize typeWin) {
         this.typeWin = typeWin;
     }
 

@@ -2,6 +2,10 @@ package com.samuilolegovich.WBL.model;
 
 
 import com.samuilolegovich.WBL.db.*;
+import com.samuilolegovich.WBL.model.enums.Enums;
+import com.samuilolegovich.WBL.model.enums.InformationAboutRates;
+import com.samuilolegovich.WBL.model.enums.Prize;
+import com.samuilolegovich.WBL.model.enums.RedBlack;
 import com.samuilolegovich.WBL.model.util.Constants;
 import com.samuilolegovich.WBL.model.util.Converter;
 import com.samuilolegovich.WBL.model.util.Generator;
@@ -38,18 +42,18 @@ public class Bet implements Bets {
 
         // если ставка выше допустимой
         if (Constants.MAXIMUM_RATE < bet)
-            return new Win(RedBlack.MAXIMUM_RATE, 0);
+            return new Win(InformationAboutRates.MAXIMUM_RATE, 0);
 
         // если недостаточно кредитов то ...
         if ((playerCredits / Constants.FOR_USER_CALCULATIONS) < bet)
-            return new Win(RedBlack.INSUFFICIENT_FUNDS, 0);
+            return new Win(InformationAboutRates.INSUFFICIENT_FUNDS, 0);
 
         Arsenal arsenal = arsenalRepo.findFirstByOrderByCreatedAtDesc();
         long arsenalCredit = arsenal.getCredits();
 
         // проверяем достаточно ли кредитов в запасе на ответ ставке
         if ((arsenalCredit / Constants.FOR_USER_CALCULATIONS) <= bet)
-            return new Win(RedBlack.NOT_ENOUGH_CREDIT_FOR_ANSWER, 0);
+            return new Win(InformationAboutRates.NOT_ENOUGH_CREDIT_FOR_ANSWER, 0);
 
         // Получаем состояния системы
         Lotto lotto = lottoRepo.findFirstByOrderByCreatedAtDesc();
@@ -66,7 +70,7 @@ public class Bet implements Bets {
         if (bias > Constants.ZERO_BIAS) {
             // если лото позволяет дробление
             if (checkForWinningsLotto(lottoCredits)) {
-                if (generatedLotto == Constants.POINT) return point(player, playerCredits, lottoCredits);
+                if (generatedLotto == Constants.LOTTO) return point(player, playerCredits, lottoCredits);
                 if (generatedLotto == Constants.SUPER_LOTTO) return superLotto(player, playerCredits, lottoCredits);
             }
             return takeIntoAccountTheBias(player, playerCredits, bet, redBlackBet, arsenalCredit,
@@ -89,10 +93,10 @@ public class Bet implements Bets {
         player.setCredits(playerCredits + boobyPrize);
 
         lottoRepo.save(new Lotto(lottoCredits - (boobyPrize + onePercent)));
-        donationsRepo.save(new Donations(onePercent, totalDonation, RedBlack.POINT));
+        donationsRepo.save(new Donations(onePercent, totalDonation, Prize.LOTTO));
         playerRepo.save(player);
 
-        return new Win(RedBlack.POINT, boobyPrize / Constants.FOR_USER_CALCULATIONS);
+        return new Win(Prize.LOTTO, boobyPrize / Constants.FOR_USER_CALCULATIONS);
     }
 
 
@@ -106,11 +110,11 @@ public class Bet implements Bets {
 
         player.setCredits(playerCredits + allLotto);
 
-        donationsRepo.save(new Donations(donation, totalDonations, RedBlack.POINT));
+        donationsRepo.save(new Donations(donation, totalDonations, Prize.LOTTO));
         lottoRepo.save(new Lotto(0));
         playerRepo.save(player);
 
-        return new Win(RedBlack.POINT, allLotto / Constants.FOR_USER_CALCULATIONS);
+        return new Win(Prize.LOTTO, allLotto / Constants.FOR_USER_CALCULATIONS);
     }
 
 
@@ -145,11 +149,11 @@ public class Bet implements Bets {
 
         // если лото позволяет дробление
         if (checkForWinningsLotto(lottoCredits)) {
-            if (generatedLotto == Constants.POINT) return point(player, playerCredits, lottoCredits);
+            if (generatedLotto == Constants.LOTTO) return point(player, playerCredits, lottoCredits);
             if (generatedLotto == Constants.SUPER_LOTTO) return superLotto(player, playerCredits, lottoCredits);
         }
 
-        RedBlack redBlackConvert = Converter.convert(generatedLotto);
+        Enums redBlackConvert = Converter.convert(generatedLotto);
 
         int resultCredits = bet * Constants.FOR_USER_CALCULATIONS;
 

@@ -2,7 +2,7 @@ package com.samuilolegovich.WBL.db;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.samuilolegovich.WBL.model.RedBlack;
+import com.samuilolegovich.WBL.model.enums.RedBlack;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;

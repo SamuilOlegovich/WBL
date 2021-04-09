@@ -1,5 +1,6 @@
 package com.samuilolegovich.WBL.model;
 
+import com.samuilolegovich.WBL.model.enums.Enums;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -7,6 +8,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class Win {
-    private RedBlack redBlack;
+    private Enums redBlack;
     private long win;
 }
