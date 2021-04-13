@@ -8,6 +8,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class Win {
-    private Enums redBlack;
+    private Enums replyToBet;
     private long win;
 }

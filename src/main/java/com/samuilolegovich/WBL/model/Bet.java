@@ -30,23 +30,21 @@ public class Bet implements Bets {
     private LottoRepo lottoRepo;
 
 
-    private Bet() {}
+
+    private Bet() { }
+
+
+    public static synchronized Bet getInstance() {
+        if (bet == null) bet = new Bet();
+        return bet;
+    }
 
 
 
 
-    public synchronized Win calculateTheWin(long id, int bet, RedBlack redBlackBet) {
+    public synchronized Win calculateTheWin(Player player, int bet, RedBlack redBlackBet) {
         // получаем игрока и данные о его кредитах
-        Player player = playerRepo.findById(id);
         long playerCredits = player.getCredits();
-
-        // если ставка выше допустимой
-        if (Constants.MAXIMUM_RATE < bet)
-            return new Win(InformationAboutRates.MAXIMUM_RATE, 0);
-
-        // если недостаточно кредитов то ...
-        if ((playerCredits / Constants.FOR_USER_CALCULATIONS) < bet)
-            return new Win(InformationAboutRates.INSUFFICIENT_FUNDS, 0);
 
         Arsenal arsenal = arsenalRepo.findFirstByOrderByCreatedAtDesc();
         long arsenalCredit = arsenal.getCredits();
@@ -139,7 +137,7 @@ public class Bet implements Bets {
         conditionRepo.save(condition);
         playerRepo.save(player);
 
-        return new Win(redBlackBet.equals(RedBlack.RED) ? RedBlack.BLACK : RedBlack.RED, 0);
+        return new Win(Prize.ZERO, 0);
     }
 
     
@@ -166,7 +164,7 @@ public class Bet implements Bets {
             conditionRepo.save(condition);
             playerRepo.save(player);
 
-            return new Win(redBlackConvert, bet);
+            return new Win(Prize.WIN, bet);
         }
 
         player.setCredits(playerCredits - resultCredits);
@@ -174,20 +172,12 @@ public class Bet implements Bets {
         lottoRepo.save(new Lotto(lottoCredits + resultCredits));
         playerRepo.save(player);
 
-        return new Win(redBlackConvert, 0);
+        return new Win(Prize.ZERO, 0);
     }
 
 
 
     private boolean checkForWinningsLotto(long lottoCredits) {
-        if (lottoCredits >= 1000) return true;
-        return false;
-    }
-
-
-
-    public static synchronized Bet getInstance() {
-        if (bet == null) bet = new Bet();
-        return bet;
+        return lottoCredits >= Constants.MINIMUM_LOTO_FOR_DRAWING_POSSIBILITIES;
     }
 }
