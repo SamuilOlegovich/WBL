@@ -10,33 +10,41 @@ import com.samuilolegovich.WBL.model.util.Constants;
 import com.samuilolegovich.WBL.model.util.Converter;
 import com.samuilolegovich.WBL.model.util.Generator;
 import com.samuilolegovich.WBL.repo.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
 
 
 
 public class Bet implements Bets {
-    private static Bet bet = null;
+    private final ConditionRepo conditionRepo;
+    private final DonationsRepo donationsRepo;
+    private final ArsenalRepo arsenalRepo;
+    private final PlayerRepo playerRepo;
+    private final LottoRepo lottoRepo;
 
-    @Autowired
-    private ConditionRepo conditionRepo;
-    @Autowired
-    private DonationsRepo donationsRepo;
-    @Autowired
-    private ArsenalRepo arsenalRepo;
-    @Autowired
-    private PlayerRepo playerRepo;
-    @Autowired
-    private LottoRepo lottoRepo;
+    private static volatile Bet bet;
 
 
+    private Bet(ConditionRepo conditionRepo, DonationsRepo donationsRepo, ArsenalRepo arsenalRepo,
+               PlayerRepo playerRepo, LottoRepo lottoRepo) {
+        this.conditionRepo = conditionRepo;
+        this.donationsRepo = donationsRepo;
+        this.arsenalRepo = arsenalRepo;
+        this.playerRepo = playerRepo;
+        this.lottoRepo = lottoRepo;
+    }
 
-    private Bet() { }
 
-
-    public static synchronized Bet getInstance() {
-        if (bet == null) bet = new Bet();
-        return bet;
+    public static Bet getInstance(ConditionRepo conditionRepo, DonationsRepo donationsRepo, ArsenalRepo arsenalRepo,
+                                  PlayerRepo playerRepo, LottoRepo lottoRepo) {
+        Bet localInstance = bet;
+        if (localInstance == null) {
+            synchronized (Bet.class) {
+                localInstance = bet;
+                if (localInstance == null) {
+                    bet = localInstance = new Bet(conditionRepo, donationsRepo, arsenalRepo, playerRepo, lottoRepo);
+                }
+            }
+        }
+        return localInstance;
     }
 
 

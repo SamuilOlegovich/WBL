@@ -1,13 +1,15 @@
-package com.samuilolegovich.WBL.model;
+package com.samuilolegovich.WBL.config;
 
+import com.samuilolegovich.WBL.model.Bet;
 import com.samuilolegovich.WBL.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 
-public class Test {
-    private static Test bet = null;
 
+@Configuration
+public class BetConfig {
     @Autowired
     private ConditionRepo conditionRepo;
     @Autowired
@@ -20,16 +22,8 @@ public class Test {
     private LottoRepo lottoRepo;
 
 
-    private Test() {
-    }
-
-    public static synchronized Test getInstance() {
-        if (bet == null) bet = new Test();
-        return bet;
-    }
-
-
-    public void tt() {
-        System.out.println(lottoRepo);
+    @Bean
+    public Bet getBet() {
+        return Bet.getInstance(conditionRepo, donationsRepo, arsenalRepo, playerRepo, lottoRepo);
     }
 }

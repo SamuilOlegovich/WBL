@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
+
 @Service
 public class BetService {
     @Autowired
@@ -27,7 +28,8 @@ public class BetService {
     private PlayerRepo playerRepo;
     @Autowired
     private LottoRepo lottoRepo;
-
+    @Autowired
+    private Bet betClass;
 
 
 
@@ -50,8 +52,7 @@ public class BetService {
         }
 
         // если все хорошо делаем ставку
-        Bets bets = Bet.getInstance();
-        Win win = bets.calculateTheWin(player, bet, redBlackBet);
+        Win win = betClass.calculateTheWin(player, bet, redBlackBet);
         Enums enums = win.getReplyToBet();
 
         // обрабатываем ответы по ставке
